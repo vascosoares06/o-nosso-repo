@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feedback de pitch</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: uma coluna central. Primeiro o público e o guião (texto ou voz), depois
+   uma faixa azul com os seis resultados em grande e, por baixo, os cartões de detalhe. */
+:root {
+  --azul: #175FAA;
+  --ciano: #74D1EF;
+  --azul-escuro: #0944A1;
+  --claro: #F6F6F6;
+  --texto: #3D4F6B;
+  --gelo: #E2EEFF;
+  --filete-azul: #4D85C2;
+  --filete-claro: #C9DAEE;
+  --branco: #FFFFFF;
+  --aviso-fundo: #FFE8B0;
+  --aviso-linha: #D99A1F;
+  --fonte: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+
+html { background: var(--azul); }
+body {
+  margin: 0;
+  background: var(--azul);
+  color: var(--claro);
+  font-family: var(--fonte);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+* { box-sizing: border-box; }
+
+.pagina {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-block: 28px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 700; text-wrap: balance; }
+h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.15; color: var(--claro); }
+.barra { width: 120px; height: 6px; border-radius: 3px; background: var(--ciano); margin: 14px 0 16px; }
+.intro { margin: 0; max-width: 62ch; color: var(--gelo); }
+
+/* Cartões claros */
+.cartao {
+  background: var(--claro);
+  color: var(--texto);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 0;
+}
+.cartao h2 { font-size: 20px; color: var(--azul); }
+.cartao h3 { font-size: 16px; color: var(--azul); }
+.cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 14px; }
+.etiqueta {
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--azul-escuro); background: var(--gelo); border: 1px solid var(--filete-claro);
+  border-radius: 6px; padding: 3px 8px;
+}
+
+/* Campos */
+label { font-size: 13px; font-weight: 600; color: var(--azul); }
+textarea, select, input[type="number"] {
+  font-family: var(--fonte);
+  font-size: 16px;
+  color: var(--texto);
+  background: var(--branco);
+  border: 2px solid var(--filete-claro);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 100%;
+  min-width: 0;
+}
+textarea { resize: vertical; line-height: 1.55; }
+textarea[readonly] { background: var(--gelo); }
+textarea:focus, select:focus, input:focus { border-color: var(--azul); outline: none; }
+.opcoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 14px; }
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+details { margin-top: 14px; border-top: 1px solid var(--filete-claro); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 600; color: var(--azul); }
+details .campo { margin-top: 10px; }
+.ajuda { font-size: 13px; margin: 6px 0 0; }
+
+/* Botões: 8px de raio, sem sombras */
+button {
+  font-family: var(--fonte);
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 11px 18px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  min-height: 44px;
+}
+.btn-primario { background: var(--ciano); color: var(--azul-escuro); }
+.btn-primario:hover { background: #8BDAF3; }
+.btn-secundario { background: transparent; color: var(--azul); border-color: var(--azul); }
+.btn-secundario:hover { background: var(--gelo); }
+.btn-gravar.a-gravar { background: var(--azul-escuro); color: var(--claro); }
+.btn-gravar.a-gravar:hover { background: var(--azul); }
+.botoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.nota { font-size: 13px; margin: 12px 0 0; }
+.aviso { font-size: 13px; font-weight: 600; margin: 8px 0 0; min-height: 1.4em; color: var(--gelo); }
+
+:focus-visible { outline: 3px solid var(--ciano); outline-offset: 2px; }
+.cartao :focus-visible { outline-color: var(--azul); }
+.cartao textarea:focus-visible, .cartao select:focus-visible, .cartao input:focus-visible { outline: 3px solid var(--azul); outline-offset: 1px; }
+
+/* Público */
+.publico { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--filete-claro); }
+
+/* Voz */
+.voz { margin-top: 14px; padding: 14px; border: 1px solid var(--filete-claro); border-radius: 10px; background: var(--branco); }
+.voz-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.voz-tempo { font-size: 22px; font-weight: 700; color: var(--azul); font-variant-numeric: tabular-nums; min-width: 3.2ch; }
+.nivel { flex: 1 1 120px; max-width: 220px; height: 10px; border-radius: 5px; background: var(--filete-claro); overflow: hidden; }
+.nivel span { display: block; height: 100%; width: 0; background: var(--azul); border-radius: 5px; }
+
+/* Faixa de resultados sobre o azul */
+.banda { display: flex; flex-direction: column; gap: 14px; }
+.banda:focus { outline: none; }
+.banda h2 { font-size: 22px; color: var(--claro); }
+.banda .cab { margin-bottom: 0; }
+.metricas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.metrica {
+  border: 1px solid var(--filete-azul);
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.metrica .rotulo { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--gelo); }
+.metrica .valor { font-size: clamp(34px, 8vw, 52px); font-weight: 800; line-height: 1.05; color: var(--ciano); font-variant-numeric: tabular-nums; }
+.metrica .valor small { font-size: 16px; font-weight: 600; color: var(--gelo); margin-left: 4px; }
+.metrica .legenda { font-size: 13px; color: var(--gelo); overflow-wrap: anywhere; }
+
+/* Cartões de detalhe */
+.detalhes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.criterios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.criterio .linha { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.criterio .linha b { font-weight: 600; color: var(--azul); }
+.criterio .linha span { font-variant-numeric: tabular-nums; text-align: right; }
+.criterio .det { font-size: 13px; }
+.trilho { height: 8px; border-radius: 4px; background: var(--filete-claro); margin-top: 6px; overflow: hidden; }
+.preenchido { height: 100%; background: var(--azul); border-radius: 4px; }
+.sugestoes { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
+.checks { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.checks li { display: flex; gap: 10px; align-items: baseline; }
+.selo { flex: none; min-width: 48px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-radius: 6px; padding: 2px 6px; }
+.selo.sim { background: var(--gelo); color: var(--azul-escuro); border: 1px solid var(--filete-claro); }
+.selo.falta { background: var(--aviso-fundo); color: var(--texto); border: 1px solid var(--aviso-linha); }
+
+.fichas { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ficha {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  background: var(--gelo); color: var(--azul-escuro);
+  border: 1px solid var(--filete-claro); border-radius: 8px; padding: 6px 10px; font-weight: 600;
+}
+.ficha .vezes { font-size: 13px; font-variant-numeric: tabular-nums; }
+.repeticoes { margin: 14px 0 0; font-size: 14px; }
+
+.longas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.longas li { border-left: 4px solid var(--aviso-linha); background: var(--branco); border-radius: 0 8px 8px 0; padding: 10px 12px; min-width: 0; }
+.longas .meta { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--azul); margin-bottom: 4px; }
+.longas .frase { overflow-wrap: anywhere; font-size: 15px; }
+
+.vazio { margin: 0; font-size: 15px; }
+.largo { grid-column: 1 / -1; }
+
+/* Ritmo e pausas */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 0 0 18px; }
+.stat { border: 1px solid var(--filete-claro); border-radius: 8px; padding: 10px 12px; background: var(--branco); min-width: 0; }
+.stat span { display: block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--azul); }
+.stat b { display: block; font-size: 20px; font-weight: 700; color: var(--texto); font-variant-numeric: tabular-nums; }
+.stat small { display: block; font-size: 13px; }
+.linha-tempo { position: relative; height: 30px; border-radius: 6px; background: var(--azul); overflow: hidden; margin-top: 8px; }
+.linha-tempo i { position: absolute; top: 0; bottom: 0; background: var(--filete-claro); }
+.linha-tempo i.longa { background: var(--aviso-fundo); border-left: 2px solid var(--aviso-linha); border-right: 2px solid var(--aviso-linha); }
+.eixo { display: flex; justify-content: space-between; font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.legenda-marcas { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; margin: 10px 0; align-items: center; }
+.cor { display: inline-block; width: 22px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+.cor.fala { background: var(--azul); }
+.cor.pausa { background: var(--filete-claro); border: 1px solid var(--filete-azul); }
+.cor.pausa-longa { background: var(--aviso-fundo); border: 1px solid var(--aviso-linha); }
+
+/* Guião marcado */
+.marcado {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--branco);
+  border: 1px solid var(--filete-claro);
+  border-radius: 8px;
+  padding: 14px;
+  line-height: 1.9;
+  font-size: 15px;
+}
+.marcado mark, .amostra-ench { background: var(--ciano); color: var(--azul-escuro); border-radius: 3px; padding: 0 3px; font-weight: 600; }
+.marcado .longa, .amostra-longa { background: var(--aviso-fundo); border-bottom: 2px solid var(--aviso-linha); }
+.amostra-ench, .amostra-longa { display: inline-block; padding: 0 8px; }
+#copia { margin-top: 10px; }
+
+.rodape { font-size: 12px; color: var(--gelo); margin: 4px 0 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (min-width: 720px) { .metricas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .cartao { padding: 16px; }
+  .detalhes { grid-template-columns: 1fr; }
+  .botoes button { flex: 1 1 140px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main class="pagina">
+
+  <header>
+    <h1>Feedback de pitch</h1>
+    <div class="barra"></div>
+    <p class="intro">Escreve, cola ou diz o teu pitch em voz alta e vê a duração, o ritmo, as pausas, as palavras de enchimento, as frases longas e a nota de clareza, ajustados ao público que vais ter à frente. Feita para as equipas da JUNITEC que ensaiam apresentações de consultoria e inovação.</p>
+  </header>
+
+  <section class="cartao" aria-labelledby="t-guiao">
+    <div class="cab">
+      <h2 id="t-guiao">O teu pitch</h2>
+      <span class="etiqueta" id="etiqueta-exemplo">Guião de exemplo</span>
+    </div>
+
+    <div class="publico">
+      <div class="campo">
+        <label for="publico">Para quem vais apresentar?</label>
+        <select id="publico"></select>
+      </div>
+      <p class="ajuda" id="publico-desc"></p>
+    </div>
+
+    <label class="sr" for="guiao">Texto do guião</label>
+    <textarea id="guiao" rows="11" spellcheck="true"></textarea>
+    <p class="nota" id="contagem" aria-live="polite"></p>
+
+    <div class="voz">
+      <div class="voz-topo">
+        <button type="button" class="btn-primario btn-gravar" id="gravar" aria-pressed="false">Falar em vez de colar</button>
+        <span class="voz-tempo" id="voz-tempo">0:00</span>
+        <span class="nivel" aria-hidden="true"><span id="voz-nivel"></span></span>
+        <button type="button" class="btn-secundario" id="desfazer" hidden>Repor texto anterior</button>
+      </div>
+      <p class="ajuda" id="voz-estado" role="status">Fala em português. A transcrição substitui o texto e a app mede o ritmo e as pausas. Funciona em Chrome, Edge e Safari, com o site aberto por HTTPS.</p>
+      <p class="ajuda">A transcrição é feita pelo teu browser e, em Chrome e Edge, o áudio passa pelo serviço de voz online do browser. A app não guarda áudio. Em voz, cada trecho entre duas pausas conta como uma frase.</p>
+    </div>
+
+    <div class="opcoes">
+      <div class="campo">
+        <label for="ritmo">Ritmo de fala previsto</label>
+        <select id="ritmo">
+          <option value="110">110 palavras/min (calmo)</option>
+          <option value="120">120 palavras/min</option>
+          <option value="130" selected>130 palavras/min (normal)</option>
+          <option value="140">140 palavras/min</option>
+          <option value="150">150 palavras/min (rápido)</option>
+          <option value="160">160 palavras/min</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="alvo">Tempo-alvo (minutos)</label>
+        <input id="alvo" type="number" min="0.5" max="60" step="0.5" value="2" inputmode="decimal">
+      </div>
+      <div class="campo">
+        <label for="limite">Frase longa a partir de</label>
+        <select id="limite">
+          <option value="18">18 palavras</option>
+          <option value="20">20 palavras</option>
+          <option value="22">22 palavras</option>
+          <option value="25" selected>25 palavras</option>
+          <option value="28">28 palavras</option>
+          <option value="30">30 palavras</option>
+        </select>
+      </div>
+    </div>
+    <p class="ajuda">Ao mudar de público, o ritmo previsto, o tempo-alvo e o limite de frase passam para os valores típicos. Podes alterá-los a seguir. Se gravares, o ritmo e a duração passam a ser os medidos.</p>
+
+    <details>
+      <summary>Personalizar palavras de enchimento</summary>
+      <div class="campo">
+        <label for="lista">Palavras e expressões, separadas por vírgulas</label>
+        <textarea id="lista" rows="4"></textarea>
+        <p class="ajuda">Algumas só contam como enchimento conforme o contexto. Ajusta a lista à tua equipa.</p>
+      </div>
+      <div class="botoes">
+        <button type="button" class="btn-secundario" id="repor">Repor lista original</button>
+      </div>
+    </details>
+
+    <div class="botoes">
+      <button type="button" class="btn-primario" id="analisar">Analisar</button>
+      <button type="button" class="btn-secundario" id="exemplo">Carregar exemplo</button>
+      <button type="button" class="btn-secundario" id="limpar">Limpar</button>
+    </div>
+    <p class="nota">O texto e as opções ficam guardados só neste browser (localStorage). Nada é enviado para fora pela app.</p>
+  </section>
+
+  <section class="banda" id="resultado" aria-labelledby="t-res" tabindex="-1">
+    <div class="cab">
+      <h2 id="t-res">Resultado</h2>
+      <button type="button" class="btn-primario" id="copiar">Copiar resultado</button>
+    </div>
+    <div class="metricas">
+      <div class="metrica">
+        <span class="rotulo">Nota de clareza</span>
+        <span class="valor"><span id="m-nota">–</span><small>/100</small></span>
+        <span class="legenda" id="m-rotulo">&nbsp;</span>
+      </div>
+      <div class="metrica">
+        <span class="rotulo" id="m-dur-rotulo">Duração estimada</span>
+        <span class="valor" id="m-dur">–</span>
+        <span class="legenda" id="m-alvo">&nbsp;</span>
+      </div>
+      <div class="metrica">
+        <span class="rotulo">Ritmo medido</span>
+        <span class="valor"><span id="m-ppm">–</span><small>ppm</small></span>
+        <span class="legenda" id="m-ppm-leg">&nbsp;</span>
+      </div>
+      <div class="metrica">
+        <span class="rotulo">Pausas</span>
+        <span class="valor" id="m-pausas">–</span>
+        <span class="legenda" id="m-pausas-leg">&nbsp;</span>
+      </div>
+      <div class="metrica">
+        <span class="rotulo">Palavras de enchimento</span>
+        <span class="valor" id="m-ench">–</span>
+        <span class="legenda" id="m-ench-leg">&nbsp;</span>
+      </div>
+      <div class="metrica">
+        <span class="rotulo">Frases longas</span>
+        <span class="valor" id="m-long">–</span>
+        <span class="legenda" id="m-long-leg">&nbsp;</span>
+      </div>
+    </div>
+    <textarea id="copia" rows="8" readonly hidden aria-label="Resultado para copiar"></textarea>
+    <p class="aviso" id="aviso" role="status"></p>
+  </section>
+
+  <div class="detalhes">
+    <section class="cartao" aria-labelledby="t-nota">
+      <div class="cab"><h2 id="t-nota">Porque tem esta nota</h2></div>
+      <ul class="criterios" id="criterios"></ul>
+      <h3 style="margin-top:20px" id="t-verif">Verificações para o público</h3>
+      <ul class="checks" id="verificacoes"></ul>
+    </section>
+
+    <section class="cartao" aria-labelledby="t-ench">
+      <div class="cab"><h2 id="t-ench">Palavras de enchimento</h2></div>
+      <div id="lista-ench"></div>
+      <h3 style="margin-top:20px">O que fazer</h3>
+      <ul class="sugestoes" id="sugestoes"></ul>
+    </section>
+
+    <section class="cartao largo" aria-labelledby="t-voz2">
+      <div class="cab"><h2 id="t-voz2">Ritmo e pausas</h2></div>
+      <div id="voz-detalhe"></div>
+    </section>
+
+    <section class="cartao largo" aria-labelledby="t-long">
+      <div class="cab"><h2 id="t-long">Frases demasiado longas</h2></div>
+      <div id="lista-longas"></div>
+    </section>
+
+    <section class="cartao largo" aria-labelledby="t-marcado">
+      <div class="cab"><h2 id="t-marcado">Texto marcado</h2></div>
+      <div class="legenda-marcas">
+        <span><span class="amostra-ench">enchimento</span></span>
+        <span><span class="amostra-longa">frase longa</span></span>
+      </div>
+      <div class="marcado" id="marcado"></div>
+    </section>
+  </div>
+
+  <p class="rodape">Feito pela JUNITEC</p>
+</main>
+
+<script>
+/* ============ Dados ============ */
+
+// Guião de exemplo (texto inventado, só para demonstrar a app).
+const EXEMPLO = `Boa tarde a todos. Eu sou o [nome] e, tipo, hoje venho apresentar a Rota Verde, que é basicamente uma aplicação para estudantes partilharem boleias entre a casa e a universidade.
+
+O problema é que, na verdade, muitos estudantes fazem todos os dias o mesmo caminho sozinhos de carro, ao mesmo tempo que outros estudantes que vivem na mesma zona gastam muito dinheiro e muito tempo em transportes que nem sempre são pontuais e que, em termos de conforto, deixam muito a desejar durante o inverno.
+
+Então a nossa solução, ou seja, a Rota Verde, junta estas pessoas de forma simples. Cada estudante indica o seu horário e o seu trajeto, e a aplicação sugere automaticamente quem pode partilhar a viagem. Pronto, é realmente muito fácil.
+
+A aplicação permite dividir os custos do combustível e das portagens de forma transparente, o que, digamos, resolve também a questão das discussões sobre dinheiro que muitas vezes acontecem entre colegas depois de algumas semanas de viagens partilhadas.
+
+O nosso objetivo, portanto, é testar a ideia com um grupo piloto na universidade durante um semestre e perceber se os estudantes continuam a usar a aplicação. Obrigado pela vossa atenção.`;
+
+// Lista inicial de palavras e expressões de enchimento (moletas), português de Portugal.
+const ENCHIMENTO_PADRAO = [
+  "ou seja", "quer dizer", "no fundo", "digamos que", "tipo assim", "a nível de",
+  "em termos de", "de certa forma", "de alguma forma", "sei lá", "como é óbvio",
+  "na verdade", "meio que", "e pronto", "digamos", "tipo", "basicamente",
+  "essencialmente", "praticamente", "literalmente", "obviamente", "claramente",
+  "realmente", "efetivamente", "efectivamente", "enfim", "pronto", "então",
+  "portanto", "ok", "hum", "eh"
+];
+
+// Linguagem informal que destoa em apresentações formais.
+const INFORMAIS = /(?<![\p{L}])(tipo|pá|né|bué|fixe|gajo|tá)(?![\p{L}])/iu;
+
+// Perfis de público: mudam o tom do feedback, os limiares e as verificações.
+const tem = (re) => (c) => re.test(c.texto);
+const PUBLICOS = {
+  geral: {
+    nome: "Equipa ou público geral",
+    desc: "Colegas, orientadores ou uma audiência mista.",
+    tomDesc: "claro e encorajador",
+    ritmo: 130, alvoMin: 2, limite: 25, ppm: [120, 150],
+    idealMedia: 14, zeroMedia: 30, tolEnch: 6, tolComplexas: 20,
+    veredito: ["Muito clara", "Clara", "Pode melhorar", "Confusa"],
+    abertura: "",
+    verificacoes: [
+      { nome: "Tem um fecho claro", ok: tem(/obrigad|em resumo|para concluir|concluindo|próximos passos|ficamos disponíveis/iu), dica: "Acaba com uma frase de fecho: o que queres que fique na cabeça de quem ouve." },
+      { nome: "Tem um exemplo concreto", ok: tem(/por exemplo|imagin|como quando|caso concreto/iu), dica: "Junta um exemplo concreto. Ajuda a perceber a ideia." }
+    ]
+  },
+  investidores: {
+    nome: "Investidores ou júri de concurso",
+    desc: "Pouco tempo e muita decisão. Valoriza ritmo vivo, números e um pedido claro.",
+    tomDesc: "direto e exigente",
+    ritmo: 150, alvoMin: 3, limite: 20, ppm: [140, 160],
+    idealMedia: 12, zeroMedia: 24, tolEnch: 4, tolComplexas: 15,
+    veredito: ["Pitch afiado", "Convincente", "Ainda dispersa", "Vai perder a sala"],
+    abertura: "Quem investe decide nos primeiros 30 segundos. Abre com o problema e o que pedes.",
+    verificacoes: [
+      { nome: "Apresenta problema e solução", ok: (c) => /problema/iu.test(c.texto) && /solu|resolve/iu.test(c.texto), dica: "Abre com o problema e passa logo à solução." },
+      { nome: "Tem números concretos", ok: (c) => (c.texto.match(/\d+/g) || []).length >= 2, dica: "Põe pelo menos dois números concretos: mercado, custo, receita ou tração." },
+      { nome: "Diz o que pede", ok: tem(/pedimos|peço|procuramos|precisamos|investimento|financiamento|apoio/iu), dica: "Diz claramente o que pedes e para quê." },
+      { nome: "Sem linguagem informal", ok: (c) => !INFORMAIS.test(c.texto), dica: "Tira expressões como «tipo» ou «pá». Passam falta de preparação." }
+    ]
+  },
+  cliente: {
+    nome: "Cliente de consultoria (direção)",
+    desc: "Quem decide e paga. Valoriza objetividade, benefícios e recomendações.",
+    tomDesc: "profissional e orientado para decisão",
+    ritmo: 130, alvoMin: 5, limite: 22, ppm: [120, 140],
+    idealMedia: 15, zeroMedia: 30, tolEnch: 4.5, tolComplexas: 18,
+    veredito: ["Pronta para a direção", "Sólida", "Precisa de ajustes", "Pouco objetiva"],
+    abertura: "A direção quer decisões. Acaba sempre com uma recomendação e os próximos passos.",
+    verificacoes: [
+      { nome: "Termina com recomendação ou próximos passos", ok: tem(/recomend|próximos passos|proposta|propomos|sugerimos/iu), dica: "Fecha com uma recomendação e os próximos passos, com prazos." },
+      { nome: "Mostra benefício ou resultado", ok: tem(/benefício|poupança|poupar|redu[zç]|aumento|resultado|impacto|valor|ganho/iu), dica: "Liga cada ideia a um benefício para o cliente: poupança, tempo, risco ou receita." },
+      { nome: "Linguagem formal", ok: (c) => !INFORMAIS.test(c.texto), dica: "Troca expressões informais por linguagem profissional." }
+    ]
+  },
+  estudantes: {
+    nome: "Estudantes ou público leigo",
+    desc: "Quem não conhece o tema. Valoriza frases curtas, exemplos e proximidade.",
+    tomDesc: "simples, próximo e prático",
+    ritmo: 120, alvoMin: 4, limite: 18, ppm: [110, 130],
+    idealMedia: 12, zeroMedia: 24, tolEnch: 7, tolComplexas: 10,
+    veredito: ["Fácil de seguir", "Boa", "Meio complicada", "Difícil de seguir"],
+    abertura: "Fala como numa conversa: frases curtas e um exemplo por ideia.",
+    verificacoes: [
+      { nome: "Dá um exemplo concreto", ok: tem(/por exemplo|imagin|suponh|como quando/iu), dica: "Dá um exemplo do dia a dia. Quem não conhece o tema precisa de se ver na história." },
+      { nome: "Faz uma pergunta ao público", ok: tem(/\?/u), dica: "Faz uma pergunta ao público para manter a atenção." },
+      { nome: "Poucas palavras complicadas", ok: (c) => c.partePalavrasLongas <= 0.05, dica: "Troca palavras longas por outras mais simples." }
+    ]
+  },
+  juri: {
+    nome: "Júri académico ou técnico",
+    desc: "Quem avalia o rigor. Aceita frases mais densas, mas quer método e evidência.",
+    tomDesc: "rigoroso e objetivo",
+    ritmo: 130, alvoMin: 7, limite: 28, ppm: [120, 140],
+    idealMedia: 16, zeroMedia: 34, tolEnch: 5, tolComplexas: 30,
+    veredito: ["Rigorosa e clara", "Consistente", "Pouco precisa", "Confusa"],
+    abertura: "O júri valoriza evidência. Diz como validaste e o que ainda não sabes.",
+    verificacoes: [
+      { nome: "Define o problema ou o objetivo", ok: tem(/problema|objetivo|pergunta de investigação/iu), dica: "Define o problema ou o objetivo logo no início." },
+      { nome: "Mostra método ou dados", ok: tem(/método|metodologia|dados|evidência|amostra|testámos|validámos|resultados|hipótese|inquérito|entrevistas/iu), dica: "Explica o método e mostra os dados ou resultados que sustentam a ideia." },
+      { nome: "Fala de limitações ou riscos", ok: tem(/limita|risco|incerte|trabalho futuro|ainda não/iu), dica: "Assume as limitações e os riscos. Um júri confia mais em quem os conhece." },
+      { nome: "Linguagem formal", ok: (c) => !INFORMAIS.test(c.texto), dica: "Troca expressões informais por linguagem rigorosa." }
+    ]
+  }
+};
+
+const CHAVE = "junitec-feedback-pitch-v2";
+const PAUSA_MINIMA = 0.7;   // segundos de silêncio que contam como pausa
+const PAUSA_LONGA = 2;      // segundos a partir dos quais a pausa é longa
+
+/* ============ Estado e utilitários ============ */
+
+const el = (id) => document.getElementById(id);
+let ultima = null;           // última análise feita
+let mostrandoExemplo = true;
+let gravacao = null;         // {segundos, pausas, pausaSeg, falaSeg, medido, palavrasGravadas}
+let sessao = null;           // sessão de gravação em curso
+let anterior = null;         // texto e gravação antes de gravar
+
+const limitar = (v) => Math.max(0, Math.min(100, v));
+const fmt1 = (n) => n.toLocaleString("pt-PT", { maximumFractionDigits: 1 });
+const plural = (n, s, p) => (n === 1 ? s : p);
+const perfilAtual = () => PUBLICOS[el("publico").value] || PUBLICOS.geral;
+
+function formatarTempo(seg) {
+  const total = Math.max(0, Math.round(seg));
+  return Math.floor(total / 60) + ":" + String(total % 60).padStart(2, "0");
+}
+
+function novo(tag, classe, texto) {
+  const e = document.createElement(tag);
+  if (classe) e.className = classe;
+  if (texto !== undefined) e.textContent = texto;
+  return e;
+}
+
+/* ============ Guardar e carregar (localStorage) ============ */
+
+function guardar() {
+  try {
+    localStorage.setItem(CHAVE, JSON.stringify({
+      texto: el("guiao").value,
+      publico: el("publico").value,
+      ritmo: el("ritmo").value,
+      alvo: el("alvo").value,
+      limite: el("limite").value,
+      lista: el("lista").value,
+      exemplo: mostrandoExemplo,
+      gravacao
+    }));
+  } catch (e) { /* sem armazenamento: a app continua a funcionar */ }
+}
+
+function lerGuardado() {
+  try {
+    const bruto = localStorage.getItem(CHAVE);
+    return bruto ? JSON.parse(bruto) : null;
+  } catch (e) { return null; }
+}
+
+/* ============ Análise do texto ============ */
+
+const reEscapar = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Constrói a expressão que procura as palavras de enchimento (as mais longas primeiro).
+function construirRegex(lista) {
+  const termos = lista
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map((t) => reEscapar(t).replace(/\s+/g, "\\s+"));
+  if (!termos.length) return null;
+  return new RegExp("(?<![\\p{L}\\p{N}])(?:" + termos.join("|") + ")(?![\\p{L}\\p{N}])", "giu");
+}
+
+function palavrasDe(texto) {
+  return texto.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) || [];
+}
+
+// Divide em frases (ponto final, ! ? … ou mudança de linha) e guarda a posição de cada uma.
+function dividirFrases(texto) {
+  const frases = [];
+  const re = /(?:[^.!?…\n]|\.(?=\d))+[.!?…]*/g;
+  let m;
+  while ((m = re.exec(texto))) {
+    const bruto = m[0];
+    const sobra = bruto.length - bruto.trimStart().length;
+    const t = bruto.trim();
+    const n = palavrasDe(t).length;
+    if (n > 0) frases.push({ inicio: m.index + sobra, texto: t, palavras: n });
+  }
+  return frases;
+}
+
+function contarEnchimento(texto, regex) {
+  const mapa = new Map();
+  let total = 0;
+  if (!regex) return { mapa, total };
+  regex.lastIndex = 0;
+  let m;
+  while ((m = regex.exec(texto))) {
+    if (m[0].length === 0) { regex.lastIndex++; continue; }
+    const k = m[0].toLowerCase().replace(/\s+/g, " ");
+    mapa.set(k, (mapa.get(k) || 0) + 1);
+    total++;
+  }
+  return { mapa, total };
+}
+
+// Repetições seguidas ("que que", "é é"), típicas de hesitação.
+function contarRepeticoes(palavras) {
+  const mapa = new Map();
+  let total = 0;
+  for (let i = 1; i < palavras.length; i++) {
+    const a = palavras[i - 1].toLowerCase();
+    const b = palavras[i].toLowerCase();
+    if (a === b && !/^\d+$/.test(a)) {
+      const k = a + " " + b;
+      mapa.set(k, (mapa.get(k) || 0) + 1);
+      total++;
+    }
+  }
+  return { mapa, total };
+}
+
+/* ============ Deteção de pausas (função pura) ============ */
+
+// amostras: [{t: segundos, v: volume}] por ordem. Devolve o intervalo com voz,
+// as pausas entre trechos de voz e o tempo a falar. Devolve null se não houver voz clara.
+function detetarPausas(amostras, opc) {
+  const minimo = (opc && opc.minimo) || PAUSA_MINIMA;
+  const fecho = (opc && opc.fecho) || 0.25;   // silêncios mais curtos não cortam a fala
+  if (!amostras || amostras.length < 20) return null;
+
+  const ordenados = amostras.map((a) => a.v).sort((x, y) => x - y);
+  const q = (f) => ordenados[Math.min(ordenados.length - 1, Math.floor(f * (ordenados.length - 1)))];
+  const ruido = q(0.1), pico = q(0.95);
+  if (pico < 0.008 || pico < ruido * 2) return null;
+  const limiar = ruido + (pico - ruido) * 0.2;
+
+  // Trechos com voz, juntando os silêncios muito curtos entre palavras.
+  const trechos = [];
+  let ini = null, ult = null;
+  for (const a of amostras) {
+    if (a.v >= limiar) {
+      if (ini === null) ini = a.t;
+      ult = a.t;
+    } else if (ini !== null && a.t - ult > fecho) {
+      trechos.push([ini, ult]);
+      ini = null;
+    }
+  }
+  if (ini !== null) trechos.push([ini, ult]);
+  const validos = trechos.filter((t) => t[1] - t[0] >= 0.1);
+  if (!validos.length) return null;
+
+  // O início e o fim em silêncio não contam como pausa.
+  const inicio = validos[0][0];
+  const fim = validos[validos.length - 1][1];
+  const pausas = [];
+  for (let i = 1; i < validos.length; i++) {
+    const folga = validos[i][0] - validos[i - 1][1];
+    if (folga >= minimo) pausas.push({ inicio: validos[i - 1][1] - inicio, dur: folga });
+  }
+  const segundos = fim - inicio;
+  const pausaSeg = pausas.reduce((s, p) => s + p.dur, 0);
+  return { segundos, pausas, pausaSeg, falaSeg: segundos - pausaSeg, limiar };
+}
+
+/* ============ Análise completa ============ */
+
+function analisar() {
+  const perfil = perfilAtual();
+  const texto = el("guiao").value;
+  const ritmoSel = Number(el("ritmo").value) || 130;
+  const limite = Number(el("limite").value) || 25;
+  const alvoMin = parseFloat(String(el("alvo").value).replace(",", "."));
+  const regex = construirRegex(el("lista").value.split(","));
+
+  const palavras = palavrasDe(texto);
+  const frases = dividirFrases(texto);
+  const ench = contarEnchimento(texto, regex);
+  const rep = contarRepeticoes(palavras);
+  const longas = frases.filter((f) => f.palavras > limite);
+  const nLongasPalavras = palavras.filter((p) => p.replace(/[^\p{L}]/gu, "").length >= 12).length;
+
+  const g = gravacao && gravacao.segundos > 0 ? gravacao : null;
+  const a = {
+    perfil, texto, limite, regex, gravacao: g,
+    alvoSeg: isFinite(alvoMin) && alvoMin > 0 ? alvoMin * 60 : null,
+    palavras: palavras.length, frases, longas, ench, rep,
+    ritmoSel,
+    ppm: g ? palavras.length / (g.segundos / 60) : null,
+    ppmFala: g && g.falaSeg > 0 ? palavras.length / (g.falaSeg / 60) : null
+  };
+  a.ritmoEfetivo = a.ppm || ritmoSel;
+  a.segundos = g ? g.segundos : (palavras.length / ritmoSel) * 60;
+  if (!a.palavras) return a;
+
+  a.media = a.palavras / frases.length;
+  a.densidade = ((ench.total + rep.total) / a.palavras) * 100;
+  a.densidadeEnch = (ench.total / a.palavras) * 100;
+  a.partePalavrasLongas = nLongasPalavras / a.palavras;
+
+  // Verificações do público escolhido.
+  const ctx = { texto, partePalavrasLongas: a.partePalavrasLongas };
+  a.verificacoes = perfil.verificacoes.map((v) => ({ nome: v.nome, dica: v.dica, ok: !!v.ok(ctx) }));
+  const okVer = a.verificacoes.filter((v) => v.ok).length;
+
+  // Critérios de 0 a 100. Os limiares dependem do público.
+  const [pMin, pMax] = perfil.ppm;
+  a.criterios = [
+    { nome: "Comprimento das frases", detalhe: fmt1(a.media) + " palavras por frase em média", peso: 0.25,
+      nota: limitar(100 - (a.media - perfil.idealMedia) * (100 / (perfil.zeroMedia - perfil.idealMedia))) },
+    { nome: "Frases demasiado longas", detalhe: longas.length + " de " + frases.length + " (mais de " + limite + " palavras)", peso: 0.15,
+      nota: limitar(100 - (longas.length / frases.length) * 200) },
+    { nome: "Palavras de enchimento", detalhe: fmt1(a.densidade) + " por 100 palavras" + (rep.total ? ", com " + rep.total + " " + plural(rep.total, "repetição", "repetições") : ""), peso: 0.20,
+      nota: limitar(100 - a.densidade * (100 / perfil.tolEnch)) },
+    { nome: "Palavras complicadas", detalhe: fmt1(a.partePalavrasLongas * 100) + "% com 12 letras ou mais", peso: 0.10,
+      nota: limitar(100 - a.partePalavrasLongas * 100 * (100 / perfil.tolComplexas)) },
+    { nome: "Adequação ao público", detalhe: okVer + " de " + a.verificacoes.length + " verificações", peso: 0.15,
+      nota: a.verificacoes.length ? (okVer / a.verificacoes.length) * 100 : 100 }
+  ];
+  if (g) {
+    const dist = a.ppm < pMin ? pMin - a.ppm : a.ppm > pMax ? a.ppm - pMax : 0;
+    a.criterios.push({ nome: "Ritmo de fala", detalhe: Math.round(a.ppm) + " ppm (ideal " + pMin + " a " + pMax + ")", peso: 0.10, nota: limitar(100 - dist * 2.5) });
+    if (g.medido) {
+      const frac = g.pausaSeg / g.segundos;
+      const nLongas = g.pausas.filter((p) => p.dur >= PAUSA_LONGA).length;
+      let nota = 100 - nLongas * 15;
+      if (frac > 0.3) nota -= (frac - 0.3) * 200;
+      if (g.pausas.length === 0 && g.segundos > 20) nota -= 20;
+      a.criterios.push({ nome: "Pausas", detalhe: g.pausas.length + " " + plural(g.pausas.length, "pausa", "pausas") + ", " + Math.round(frac * 100) + "% do tempo", peso: 0.05, nota: limitar(nota) });
+    }
+  }
+  const somaPesos = a.criterios.reduce((s, c) => s + c.peso, 0);
+  a.nota = Math.round(a.criterios.reduce((s, c) => s + c.nota * c.peso, 0) / somaPesos);
+  const nivel = a.nota >= 85 ? 0 : a.nota >= 70 ? 1 : a.nota >= 50 ? 2 : 3;
+  a.rotulo = perfil.veredito[nivel];
+  a.sugestoes = gerarSugestoes(a);
+  return a;
+}
+
+// Sugestões em frases curtas. O tom e o que se verifica dependem do público.
+function gerarSugestoes(a) {
+  const p = a.perfil;
+  const s = [];
+  let problemas = 0;
+  if (p.abertura) s.push(p.abertura);
+
+  if (a.longas.length) {
+    problemas++;
+    s.push("Divide " + (a.longas.length === 1 ? "a frase" : "as " + a.longas.length + " frases") + " com mais de " + a.limite + " palavras. Procura uma vírgula ou um «que» onde dê para cortar.");
+  } else if (a.media > p.idealMedia + 6) {
+    problemas++;
+    s.push("As frases estão a ficar compridas (" + fmt1(a.media) + " palavras em média). Aponta para menos de " + (p.idealMedia + 4) + ".");
+  }
+  if (a.ench.total > 0 && a.densidadeEnch > p.tolEnch * 0.25) {
+    problemas++;
+    const top = [...a.ench.mapa.entries()].sort((x, y) => y[1] - x[1])[0];
+    s.push("Corta ou troca por uma pausa «" + top[0] + "» (" + top[1] + " " + plural(top[1], "vez", "vezes") + "). Ao todo há " + a.ench.total + " palavras de enchimento.");
+  }
+  if (a.rep.total > 0) {
+    problemas++;
+    const top = [...a.rep.mapa.entries()].sort((x, y) => y[1] - x[1])[0];
+    s.push("Há " + a.rep.total + " " + plural(a.rep.total, "repetição seguida", "repetições seguidas") + ", por exemplo «" + top[0] + "». Faz uma pausa em vez de repetir.");
+  }
+  if (a.partePalavrasLongas * 100 > p.tolComplexas * 0.5) {
+    problemas++;
+    s.push("Troca palavras muito longas por alternativas mais curtas. Quem ouve não pode voltar atrás.");
+  }
+
+  const g = a.gravacao;
+  if (g) {
+    const [pMin, pMax] = p.ppm;
+    if (a.ppm > pMax) { problemas++; s.push("Falas a " + Math.round(a.ppm) + " ppm, acima do ideal para este público (" + pMin + " a " + pMax + "). Abranda nas ideias principais."); }
+    else if (a.ppm < pMin) { problemas++; s.push("Falas a " + Math.round(a.ppm) + " ppm, abaixo do ideal para este público (" + pMin + " a " + pMax + "). Ganha energia ou corta o que não é essencial."); }
+    if (g.medido) {
+      const longasP = g.pausas.filter((x) => x.dur >= PAUSA_LONGA);
+      if (longasP.length) {
+        problemas++;
+        const maior = longasP.slice().sort((x, y) => y.dur - x.dur)[0];
+        s.push("Tens " + longasP.length + " " + plural(longasP.length, "pausa", "pausas") + " de " + PAUSA_LONGA + " s ou mais (a maior, " + fmt1(maior.dur) + " s, aos " + formatarTempo(maior.inicio) + "). Usa pausas longas só antes de uma ideia importante.");
+      } else if (!g.pausas.length && g.segundos > 20) {
+        problemas++;
+        s.push("Quase não fazes pausas. Respira entre ideias para o público acompanhar.");
+      }
+    }
+  }
+
+  a.verificacoes.filter((v) => !v.ok).slice(0, 3).forEach((v) => { problemas++; s.push(v.dica); });
+
+  if (a.alvoSeg) {
+    const dif = a.segundos - a.alvoSeg;
+    const margem = a.alvoSeg * 0.1;
+    const palavrasDif = Math.round(Math.abs(dif) / 60 * a.ritmoEfetivo);
+    if (dif > margem) { problemas++; s.push("Estás " + formatarTempo(dif) + " acima do alvo. Corta cerca de " + palavrasDif + " palavras."); }
+    else if (dif < -margem) s.push("Tens " + formatarTempo(-dif) + " de margem. Cabem mais ou menos " + palavrasDif + " palavras, por exemplo, um caso concreto.");
+  }
+  if (!problemas) s.push("O guião está bem equilibrado para este público. Ensaia em voz alta e confirma o tempo com um cronómetro.");
+  return s;
+}
+
+/* ============ Desenhar o resultado ============ */
+
+function limparMetricas() {
+  ["m-nota", "m-dur", "m-ppm", "m-pausas", "m-ench", "m-long"].forEach((id) => (el(id).textContent = "–"));
+  ["m-rotulo", "m-alvo", "m-ppm-leg", "m-pausas-leg", "m-ench-leg", "m-long-leg"].forEach((id) => (el(id).textContent = " "));
+}
+
+function desenharMetricas(a) {
+  limparMetricas();
+  el("m-dur-rotulo").textContent = a.gravacao ? "Duração gravada" : "Duração estimada";
+  if (!a.palavras) return;
+  const g = a.gravacao;
+
+  el("m-nota").textContent = a.nota;
+  el("m-rotulo").textContent = a.rotulo;
+  el("m-dur").textContent = formatarTempo(a.segundos);
+  if (a.alvoSeg) {
+    const dif = a.segundos - a.alvoSeg;
+    if (Math.abs(dif) <= a.alvoSeg * 0.1) el("m-alvo").textContent = "Dentro do alvo de " + formatarTempo(a.alvoSeg);
+    else el("m-alvo").textContent = formatarTempo(Math.abs(dif)) + (dif > 0 ? " acima" : " abaixo") + " do alvo de " + formatarTempo(a.alvoSeg);
+  } else {
+    el("m-alvo").textContent = a.palavras + " palavras a " + Math.round(a.ritmoEfetivo) + "/min";
+  }
+
+  const [pMin, pMax] = a.perfil.ppm;
+  if (g) {
+    el("m-ppm").textContent = Math.round(a.ppm);
+    el("m-ppm-leg").textContent = a.ppm > pMax ? "Acima do ideal (" + pMin + " a " + pMax + ")" : a.ppm < pMin ? "Abaixo do ideal (" + pMin + " a " + pMax + ")" : "Dentro do ideal (" + pMin + " a " + pMax + ")";
+    if (g.medido) {
+      const nLongas = g.pausas.filter((p) => p.dur >= PAUSA_LONGA).length;
+      el("m-pausas").textContent = g.pausas.length;
+      el("m-pausas-leg").textContent = nLongas ? nLongas + " " + plural(nLongas, "longa", "longas") + " (" + PAUSA_LONGA + " s ou mais)" : "Nenhuma pausa longa";
+    } else {
+      el("m-pausas-leg").textContent = "Não foi possível medir";
+    }
+  } else {
+    el("m-ppm-leg").textContent = "Grava para medir";
+    el("m-pausas-leg").textContent = "Grava para detetar";
+  }
+
+  el("m-ench").textContent = a.ench.total;
+  el("m-ench-leg").textContent = fmt1(a.densidadeEnch) + " por 100 palavras" + (a.rep.total ? " + " + a.rep.total + " " + plural(a.rep.total, "repetição", "repetições") : "");
+  el("m-long").textContent = a.longas.length;
+  el("m-long-leg").textContent = "de " + a.frases.length + " " + plural(a.frases.length, "frase", "frases") + " (mais de " + a.limite + " palavras)";
+}
+
+function desenharCriterios(a) {
+  const ul = el("criterios");
+  ul.textContent = "";
+  if (!a.palavras) { ul.appendChild(novo("li", "vazio", "Escreve, cola ou diz um guião para ver a nota.")); return; }
+  a.criterios.forEach((c) => {
+    const li = novo("li", "criterio");
+    const linha = novo("div", "linha");
+    linha.appendChild(novo("b", "", c.nome));
+    linha.appendChild(novo("span", "", Math.round(c.nota) + "/100"));
+    li.appendChild(linha);
+    li.appendChild(novo("div", "det", c.detalhe));
+    const trilho = novo("div", "trilho");
+    trilho.setAttribute("role", "progressbar");
+    trilho.setAttribute("aria-label", c.nome);
+    trilho.setAttribute("aria-valuemin", "0");
+    trilho.setAttribute("aria-valuemax", "100");
+    trilho.setAttribute("aria-valuenow", String(Math.round(c.nota)));
+    const p = novo("div", "preenchido");
+    p.style.width = Math.round(c.nota) + "%";
+    trilho.appendChild(p);
+    li.appendChild(trilho);
+    ul.appendChild(li);
+  });
+}
+
+function desenharVerificacoes(a) {
+  const ul = el("verificacoes");
+  ul.textContent = "";
+  el("t-verif").textContent = "Verificações: " + a.perfil.nome;
+  if (!a.palavras) { ul.appendChild(novo("li", "vazio", "As verificações aparecem aqui.")); return; }
+  a.verificacoes.forEach((v) => {
+    const li = novo("li");
+    li.appendChild(novo("span", "selo " + (v.ok ? "sim" : "falta"), v.ok ? "Sim" : "Falta"));
+    li.appendChild(novo("span", "", v.nome));
+    ul.appendChild(li);
+  });
+}
+
+function desenharSugestoes(a) {
+  const ul = el("sugestoes");
+  ul.textContent = "";
+  if (!a.palavras) { ul.appendChild(novo("li", "", "As sugestões aparecem aqui.")); return; }
+  a.sugestoes.forEach((t) => ul.appendChild(novo("li", "", t)));
+}
+
+function desenharEnchimento(a) {
+  const caixa = el("lista-ench");
+  caixa.textContent = "";
+  if (!a.palavras) { caixa.appendChild(novo("p", "vazio", "Escreve, cola ou diz um guião para ver as palavras de enchimento.")); return; }
+  if (!a.ench.total) caixa.appendChild(novo("p", "vazio", "Não foram encontradas palavras de enchimento da lista. Bom sinal."));
+  else {
+    const ul = novo("ul", "fichas");
+    [...a.ench.mapa.entries()].sort((x, y) => y[1] - x[1]).forEach(([palavra, n]) => {
+      const li = novo("li", "ficha");
+      li.appendChild(novo("span", "", palavra));
+      li.appendChild(novo("span", "vezes", n + "×"));
+      ul.appendChild(li);
+    });
+    caixa.appendChild(ul);
+  }
+  if (a.rep.total) {
+    const txt = [...a.rep.mapa.entries()].sort((x, y) => y[1] - x[1]).map(([p, n]) => "«" + p + "» ×" + n).join(", ");
+    caixa.appendChild(novo("p", "repeticoes", "Repetições seguidas: " + txt));
+  }
+}
+
+function desenharLongas(a) {
+  const caixa = el("lista-longas");
+  caixa.textContent = "";
+  if (!a.palavras) { caixa.appendChild(novo("p", "vazio", "Escreve, cola ou diz um guião para ver as frases longas.")); return; }
+  if (!a.longas.length) { caixa.appendChild(novo("p", "vazio", "Nenhuma frase passa das " + a.limite + " palavras. Bom ritmo.")); return; }
+  const ul = novo("ul", "longas");
+  a.longas.forEach((f) => {
+    const li = novo("li");
+    li.appendChild(novo("div", "meta", "Frase " + (a.frases.indexOf(f) + 1) + " · " + f.palavras + " palavras"));
+    li.appendChild(novo("div", "frase", f.texto));
+    ul.appendChild(li);
+  });
+  caixa.appendChild(ul);
+}
+
+function novaEstatistica(rotulo, valor, nota) {
+  const d = novo("div", "stat");
+  d.appendChild(novo("span", "", rotulo));
+  d.appendChild(novo("b", "", valor));
+  if (nota) d.appendChild(novo("small", "", nota));
+  return d;
+}
+
+// Ritmo, pausas e linha do tempo da gravação.
+function desenharVoz(a) {
+  const caixa = el("voz-detalhe");
+  caixa.textContent = "";
+  const g = a.gravacao;
+  if (!g || !a.palavras) {
+    caixa.appendChild(novo("p", "vazio", "Usa «Falar em vez de colar» para medir as palavras por minuto, ver onde fazes pausas e apanhar repetições. O texto escrito ou colado só tem estimativas."));
+    return;
+  }
+  const [pMin, pMax] = a.perfil.ppm;
+  const estado = a.ppm > pMax ? "Acima do ideal. Abranda." : a.ppm < pMin ? "Abaixo do ideal. Ganha energia." : "Dentro do ideal.";
+  const stats = novo("div", "stats");
+  stats.appendChild(novaEstatistica("Ritmo", Math.round(a.ppm) + " ppm", estado));
+  stats.appendChild(novaEstatistica("Ideal para este público", pMin + " a " + pMax + " ppm", a.perfil.nome));
+  if (g.medido) {
+    stats.appendChild(novaEstatistica("Ritmo só a falar", Math.round(a.ppmFala || 0) + " ppm", "sem contar as pausas"));
+    const frac = Math.round((g.pausaSeg / g.segundos) * 100);
+    stats.appendChild(novaEstatistica("Tempo em pausa", frac + "%", formatarTempo(g.pausaSeg) + " de " + formatarTempo(g.segundos)));
+    const maior = g.pausas.length ? g.pausas.reduce((m, p) => (p.dur > m.dur ? p : m)) : null;
+    stats.appendChild(novaEstatistica("Pausa mais longa", maior ? fmt1(maior.dur) + " s" : "–", maior ? "aos " + formatarTempo(maior.inicio) : "sem pausas"));
+  }
+  caixa.appendChild(stats);
+
+  if (!g.medido) {
+    caixa.appendChild(novo("p", "vazio", "Não consegui medir as pausas neste browser ou o som estava demasiado baixo. O ritmo foi calculado com a duração total."));
+    return;
+  }
+
+  caixa.appendChild(novo("h3", "", "Linha do tempo"));
+  const linha = novo("div", "linha-tempo");
+  linha.setAttribute("role", "img");
+  linha.setAttribute("aria-label", g.pausas.length + " pausas ao longo de " + formatarTempo(g.segundos));
+  g.pausas.forEach((p) => {
+    const seg = novo("i", p.dur >= PAUSA_LONGA ? "longa" : "");
+    seg.style.left = (p.inicio / g.segundos) * 100 + "%";
+    seg.style.width = Math.max(0.4, (p.dur / g.segundos) * 100) + "%";
+    seg.title = "Pausa de " + fmt1(p.dur) + " s aos " + formatarTempo(p.inicio);
+    linha.appendChild(seg);
+  });
+  caixa.appendChild(linha);
+  const eixo = novo("div", "eixo");
+  eixo.appendChild(novo("span", "", "0:00"));
+  eixo.appendChild(novo("span", "", formatarTempo(g.segundos)));
+  caixa.appendChild(eixo);
+
+  const leg = novo("div", "legenda-marcas");
+  [["fala", "a falar"], ["pausa", "pausa (0,7 s ou mais)"], ["pausa-longa", "pausa longa (2 s ou mais)"]].forEach(([c, t]) => {
+    const s = novo("span");
+    s.appendChild(novo("span", "cor " + c));
+    s.appendChild(document.createTextNode(t));
+    leg.appendChild(s);
+  });
+  caixa.appendChild(leg);
+
+  if (g.pausas.length) {
+    const top = g.pausas.slice().sort((x, y) => y.dur - x.dur).slice(0, 5)
+      .map((p) => formatarTempo(p.inicio) + " (" + fmt1(p.dur) + " s)").join(", ");
+    caixa.appendChild(novo("p", "repeticoes", "Pausas mais longas: " + top));
+  }
+}
+
+// Escreve um texto no elemento pai, com <mark> à volta das palavras de enchimento.
+function escreverComMarcas(pai, texto, regex) {
+  if (!regex) { pai.textContent = texto; return; }
+  regex.lastIndex = 0;
+  let ultimo = 0, m;
+  while ((m = regex.exec(texto))) {
+    if (m[0].length === 0) { regex.lastIndex++; continue; }
+    if (m.index > ultimo) pai.appendChild(document.createTextNode(texto.slice(ultimo, m.index)));
+    pai.appendChild(novo("mark", "", m[0]));
+    ultimo = m.index + m[0].length;
+  }
+  if (ultimo < texto.length) pai.appendChild(document.createTextNode(texto.slice(ultimo)));
+}
+
+function desenharMarcado(a) {
+  const alvo = el("marcado");
+  alvo.textContent = "";
+  if (!a.palavras) { alvo.textContent = "O texto marcado aparece aqui."; return; }
+  let pos = 0;
+  a.frases.forEach((f) => {
+    if (f.inicio > pos) alvo.appendChild(document.createTextNode(a.texto.slice(pos, f.inicio)));
+    const s = novo("span", f.palavras > a.limite ? "longa" : "");
+    escreverComMarcas(s, f.texto, a.regex);
+    alvo.appendChild(s);
+    pos = f.inicio + f.texto.length;
+  });
+  if (pos < a.texto.length) alvo.appendChild(document.createTextNode(a.texto.slice(pos)));
+}
+
+function atualizar() {
+  ultima = analisar();
+  const a = ultima;
+  el("contagem").textContent = a.palavras + " " + plural(a.palavras, "palavra", "palavras") + " · " + a.frases.length + " " + plural(a.frases.length, "frase", "frases");
+  el("etiqueta-exemplo").hidden = !mostrandoExemplo;
+  el("publico-desc").textContent = a.perfil.desc + " Tom do feedback: " + a.perfil.tomDesc + ".";
+  desenharMetricas(a);
+  desenharCriterios(a);
+  desenharVerificacoes(a);
+  desenharSugestoes(a);
+  desenharEnchimento(a);
+  desenharVoz(a);
+  desenharLongas(a);
+  desenharMarcado(a);
+  guardar();
+}
+
+/* ============ Copiar resultado ============ */
+
+function textoDoResultado(a) {
+  if (!a.palavras) return "";
+  const g = a.gravacao;
+  const linhas = [
+    "Feedback de pitch (JUNITEC)",
+    "Público: " + a.perfil.nome,
+    "Nota de clareza: " + a.nota + "/100 (" + a.rotulo + ")",
+    (g ? "Duração gravada: " : "Duração estimada: ") + formatarTempo(a.segundos) + (g ? "" : " a " + a.ritmoSel + " palavras/min") + (a.alvoSeg ? " (alvo " + formatarTempo(a.alvoSeg) + ")" : ""),
+    "Palavras: " + a.palavras + " | Frases: " + a.frases.length
+  ];
+  if (g) {
+    linhas.push("Ritmo medido: " + Math.round(a.ppm) + " ppm (ideal " + a.perfil.ppm[0] + " a " + a.perfil.ppm[1] + ")");
+    if (g.medido) linhas.push("Pausas: " + g.pausas.length + ", " + g.pausas.filter((p) => p.dur >= PAUSA_LONGA).length + " longas, " + Math.round((g.pausaSeg / g.segundos) * 100) + "% do tempo");
+  }
+  linhas.push("Palavras de enchimento: " + a.ench.total + " (" + fmt1(a.densidadeEnch) + " por 100 palavras)" +
+    (a.ench.total ? " — " + [...a.ench.mapa.entries()].sort((x, y) => y[1] - x[1]).map(([p, n]) => p + " ×" + n).join(", ") : ""));
+  if (a.rep.total) linhas.push("Repetições seguidas: " + a.rep.total);
+  linhas.push("Frases com mais de " + a.limite + " palavras: " + a.longas.length);
+  linhas.push("Sugestões:");
+  a.sugestoes.forEach((s) => linhas.push("- " + s));
+  return linhas.join("\n");
+}
+
+function mostrarAviso(t) { el("aviso").textContent = t; }
+
+function copiarResultado() {
+  const t = textoDoResultado(ultima);
+  const caixa = el("copia");
+  if (!t) { mostrarAviso("Escreve primeiro um guião para haver resultado."); return; }
+  const mostrarParaSelecionar = () => {
+    caixa.value = t;
+    caixa.hidden = false;
+    caixa.focus();
+    caixa.select();
+    mostrarAviso("Não foi possível copiar automaticamente. Seleciona o texto e copia.");
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(() => {
+      caixa.hidden = true;
+      mostrarAviso("Resultado copiado.");
+    }).catch(mostrarParaSelecionar);
+  } else {
+    mostrarParaSelecionar();
+  }
+}
+
+/* ============ Modo de voz ============ */
+
+const estadoVoz = (t) => { el("voz-estado").textContent = t; };
+const reconhecimentoVoz = () => window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function mensagemErroMic(e) {
+  const n = e && e.name;
+  if (n === "NotAllowedError" || n === "SecurityError") {
+    return "O browser não deu acesso ao microfone. Autoriza o microfone para este site e tenta outra vez. Dentro de uma pré-visualização incorporada o microfone costuma ficar bloqueado: abre o index.html publicado num separador próprio.";
+  }
+  if (n === "NotFoundError" || n === "OverconstrainedError") return "Não encontrei nenhum microfone neste dispositivo.";
+  return "Não foi possível ligar o microfone" + (n ? " (" + n + ")." : ".");
+}
+
+async function iniciarGravacao() {
+  const SR = reconhecimentoVoz();
+  if (!SR) { estadoVoz("Este browser não tem reconhecimento de voz. Usa o Chrome, o Edge ou o Safari."); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    estadoVoz("Este browser não dá acesso ao microfone nesta página. A página tem de abrir por HTTPS.");
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { autoGainControl: false, echoCancellation: true, noiseSuppression: true } });
+  } catch (e) { estadoVoz(mensagemErroMic(e)); return; }
+
+  // Medidor de volume (serve para detetar pausas).
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  if (ctx.resume) ctx.resume();
+  const analisador = ctx.createAnalyser();
+  analisador.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(analisador);
+  const buf = new Float32Array(analisador.fftSize);
+
+  const campo = el("guiao");
+  anterior = { texto: campo.value, gravacao };
+  el("desfazer").hidden = !anterior.texto.trim();
+  campo.value = "";
+  campo.readOnly = true;
+  mostrandoExemplo = false;
+  gravacao = null;
+
+  const s = { ativa: true, fechada: false, stream, ctx, amostras: [], finais: "", interino: "", t0: performance.now() };
+  sessao = s;
+
+  s.timer = setInterval(() => {
+    analisador.getFloatTimeDomainData(buf);
+    let soma = 0;
+    for (let i = 0; i < buf.length; i++) soma += buf[i] * buf[i];
+    const rms = Math.sqrt(soma / buf.length);
+    const t = (performance.now() - s.t0) / 1000;
+    s.amostras.push({ t, v: rms });
+    el("voz-tempo").textContent = formatarTempo(t);
+    el("voz-nivel").style.width = Math.min(100, Math.sqrt(rms) * 220) + "%";
+  }, 50);
+
+  // Reconhecimento de voz: cada resultado final é uma frase.
+  const rec = new SR();
+  rec.lang = "pt-PT";
+  rec.continuous = true;
+  rec.interimResults = true;
+  s.rec = rec;
+  rec.onresult = (ev) => {
+    let interino = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      const t = r[0].transcript;
+      if (r.isFinal) s.finais += (s.finais ? " " : "") + fecharFrase(t);
+      else interino += t;
+    }
+    s.interino = interino.trim();
+    campo.value = (s.finais + (s.interino ? " " + s.interino : "")).trim();
+    atualizar();
+  };
+  rec.onerror = (ev) => {
+    if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+      estadoVoz("O browser bloqueou o reconhecimento de voz. Autoriza o microfone para este site.");
+      pararGravacao();
+    } else if (ev.error === "network") {
+      estadoVoz("Sem ligação ao serviço de voz do browser. Verifica a internet e tenta outra vez.");
+      pararGravacao();
+    }
+  };
+  rec.onend = () => {
+    if (s.ativa) { try { rec.start(); } catch (e) { /* já está a correr */ } }
+    else finalizarGravacao();
+  };
+  try { rec.start(); } catch (e) { estadoVoz("Não foi possível iniciar a transcrição."); pararGravacao(); return; }
+
+  const botao = el("gravar");
+  botao.textContent = "Parar gravação";
+  botao.classList.add("a-gravar");
+  botao.setAttribute("aria-pressed", "true");
+  estadoVoz("A gravar. Fala em português e faz as pausas que farias na apresentação. Carrega em «Parar gravação» quando acabares.");
+  atualizar();
+}
+
+// Fecha a frase com ponto se o reconhecimento não pôs pontuação.
+function fecharFrase(t) {
+  let c = t.trim();
+  if (!c) return "";
+  if (!/[.!?…]$/.test(c)) c += ".";
+  return c.charAt(0).toUpperCase() + c.slice(1);
+}
+
+function pararGravacao() {
+  const s = sessao;
+  if (!s || !s.ativa) return;
+  s.ativa = false;
+  clearInterval(s.timer);
+  s.elapsed = (performance.now() - s.t0) / 1000;
+  try { s.rec.stop(); } catch (e) { /* já parado */ }
+  s.stream.getTracks().forEach((t) => t.stop());
+  try { s.ctx.close(); } catch (e) { /* já fechado */ }
+  estadoVoz("A terminar a transcrição…");
+  // Se o browser não avisar que acabou, fecha à mesma passado um instante.
+  s.salvaguarda = setTimeout(finalizarGravacao, 1800);
+}
+
+function finalizarGravacao() {
+  const s = sessao;
+  if (!s || s.fechada) return;
+  s.fechada = true;
+  clearTimeout(s.salvaguarda);
+  const campo = el("guiao");
+  campo.readOnly = false;
+  el("voz-nivel").style.width = "0";
+
+  let texto = s.finais;
+  if (s.interino) texto += (texto ? " " : "") + fecharFrase(s.interino);
+  const botao = el("gravar");
+  botao.textContent = "Falar em vez de colar";
+  botao.classList.remove("a-gravar");
+  botao.setAttribute("aria-pressed", "false");
+  sessao = null;
+
+  if (!texto.trim()) {
+    // Nada percebido: volta ao que existia antes.
+    if (anterior) { campo.value = anterior.texto; gravacao = anterior.gravacao; }
+    el("desfazer").hidden = true;
+    estadoVoz("Não consegui perceber nada. Confirma o microfone, fala mais perto e tenta outra vez.");
+    atualizar();
+    return;
+  }
+  campo.value = texto.trim();
+  const n = palavrasDe(campo.value).length;
+  const r = detetarPausas(s.amostras);
+  if (r) {
+    gravacao = { segundos: r.segundos, pausas: r.pausas, pausaSeg: r.pausaSeg, falaSeg: r.falaSeg, medido: true, palavrasGravadas: n };
+    estadoVoz("Gravação concluída: " + formatarTempo(r.segundos) + ", " + r.pausas.length + " " + plural(r.pausas.length, "pausa", "pausas") + ". Corrige a transcrição se for preciso. O ritmo recalcula-se sozinho.");
+  } else {
+    gravacao = { segundos: s.elapsed, pausas: [], pausaSeg: 0, falaSeg: s.elapsed, medido: false, palavrasGravadas: n };
+    estadoVoz("Gravação concluída, mas não consegui medir as pausas (som muito baixo ou browser sem esse acesso). O ritmo usa a duração total.");
+  }
+  atualizar();
+}
+
+function alternarGravacao() {
+  if (sessao && sessao.ativa) pararGravacao();
+  else iniciarGravacao();
+}
+
+function reporAnterior() {
+  if (!anterior) return;
+  el("guiao").value = anterior.texto;
+  gravacao = anterior.gravacao;
+  mostrandoExemplo = false;
+  anterior = null;
+  el("desfazer").hidden = true;
+  estadoVoz("Texto anterior reposto.");
+  atualizar();
+}
+
+/* ============ Público e controlos ============ */
+
+// Aplica os valores típicos do público escolhido.
+function aplicarPerfil() {
+  const p = perfilAtual();
+  el("ritmo").value = String(p.ritmo);
+  el("alvo").value = String(p.alvoMin);
+  el("limite").value = String(p.limite);
+}
+
+function carregarExemplo() {
+  if (sessao && sessao.ativa) pararGravacao();
+  el("guiao").value = EXEMPLO;
+  mostrandoExemplo = true;
+  gravacao = null;
+  anterior = null;
+  el("desfazer").hidden = true;
+  mostrarAviso("");
+  atualizar();
+}
+
+function aoEditarTexto() {
+  mostrandoExemplo = false;
+  // Se o texto mudou muito, a gravação já não corresponde a ele.
+  if (gravacao && gravacao.palavrasGravadas) {
+    const n = palavrasDe(el("guiao").value).length;
+    if (Math.abs(n - gravacao.palavrasGravadas) / gravacao.palavrasGravadas > 0.3) {
+      gravacao = null;
+      estadoVoz("A gravação foi descartada porque o texto mudou muito. Grava outra vez para medir o ritmo e as pausas.");
+    }
+  }
+  atualizar();
+}
+
+function ligar() {
+  el("guiao").addEventListener("input", aoEditarTexto);
+  el("publico").addEventListener("change", () => { aplicarPerfil(); atualizar(); });
+  ["ritmo", "alvo", "limite", "lista"].forEach((id) => el(id).addEventListener("input", atualizar));
+
+  el("gravar").addEventListener("click", alternarGravacao);
+  el("desfazer").addEventListener("click", reporAnterior);
+  el("analisar").addEventListener("click", () => {
+    atualizar();
+    const r = el("resultado");
+    const reduzido = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    r.scrollIntoView({ behavior: reduzido ? "auto" : "smooth", block: "start" });
+    r.focus({ preventScroll: true });
+  });
+  el("exemplo").addEventListener("click", carregarExemplo);
+  el("limpar").addEventListener("click", () => {
+    if (sessao && sessao.ativa) pararGravacao();
+    el("guiao").value = "";
+    mostrandoExemplo = false;
+    gravacao = null;
+    anterior = null;
+    el("desfazer").hidden = true;
+    mostrarAviso("");
+    atualizar();
+    el("guiao").focus();
+  });
+  el("repor").addEventListener("click", () => {
+    el("lista").value = ENCHIMENTO_PADRAO.join(", ");
+    atualizar();
+  });
+  el("copiar").addEventListener("click", copiarResultado);
+}
+
+/* ============ Arranque ============ */
+
+(function iniciar() {
+  const sel = el("publico");
+  Object.keys(PUBLICOS).forEach((k) => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = PUBLICOS[k].nome;
+    sel.appendChild(o);
+  });
+  el("lista").value = ENCHIMENTO_PADRAO.join(", ");
+
+  const g = lerGuardado();
+  if (g && typeof g.texto === "string" && g.texto.trim()) {
+    el("guiao").value = g.texto;
+    mostrandoExemplo = !!g.exemplo;
+    if (g.publico && PUBLICOS[g.publico]) sel.value = g.publico;
+    if (g.ritmo) el("ritmo").value = g.ritmo;
+    if (g.alvo) el("alvo").value = g.alvo;
+    if (g.limite) el("limite").value = g.limite;
+    if (g.lista) el("lista").value = g.lista;
+    if (g.gravacao && g.gravacao.segundos > 0) gravacao = g.gravacao;
+  } else {
+    el("guiao").value = EXEMPLO;
+    mostrandoExemplo = true;
+    sel.value = "geral";
+    aplicarPerfil();
+  }
+  ligar();
+  atualizar();
+})();
+</script>
+</body>
+</html>
